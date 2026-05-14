@@ -25,7 +25,13 @@ export default function LoginPage() {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
-      setMsg({ text: error.message, type: 'error' })
+      const isNetwork = error.message.toLowerCase().includes('fetch') || error.message.toLowerCase().includes('network')
+      setMsg({
+        text: isNetwork
+          ? 'Erro de conexão com o servidor. Aguarde alguns instantes e tente novamente.'
+          : 'E-mail ou senha incorretos.',
+        type: 'error',
+      })
       setLoading(false)
       return
     }
