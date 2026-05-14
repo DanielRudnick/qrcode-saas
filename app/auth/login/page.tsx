@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 
-type Mode = 'login' | 'reset'
+type Mode = 'login' | 'reset' | 'signup'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [mode, setMode] = useState<Mode>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState<{ text: string; type: 'error' | 'success' } | null>(null)
 
@@ -57,6 +58,31 @@ export default function LoginPage() {
     }
   }
 
+  async function handleSignup(e: React.FormEvent) {
+    e.preventDefault()
+    if (password.length < 6) {
+      setMsg({ text: 'A senha deve ter pelo menos 6 caracteres.', type: 'error' })
+      return
+    }
+    setLoading(true)
+    setMsg(null)
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: name } },
+    })
+
+    setLoading(false)
+    if (error) {
+      setMsg({ text: error.message.includes('already registered')
+        ? 'E-mail já cadastrado. Faça login.'
+        : 'Erro ao criar conta. Tente novamente.', type: 'error' })
+    } else {
+      setMsg({ text: '✓ Conta criada! Verifique seu e-mail para confirmar o cadastro.', type: 'success' })
+    }
+  }
+
   const input: React.CSSProperties = {
     width: '100%',
     background: '#0a0a0a',
@@ -69,6 +95,8 @@ export default function LoginPage() {
     boxSizing: 'border-box',
     fontFamily: 'inherit',
   }
+
+  const subtitle = mode === 'login' ? 'Acesse sua conta' : mode === 'reset' ? 'Redefinir senha' : 'Criar nova conta'
 
   return (
     <div style={{
@@ -104,9 +132,7 @@ export default function LoginPage() {
             </svg>
           </div>
           <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 600, margin: 0 }}>QR Manager</h1>
-          <p style={{ color: '#666', fontSize: 14, margin: '6px 0 0' }}>
-            {mode === 'login' ? 'Acesse sua conta' : 'Redefinir senha'}
-          </p>
+          <p style={{ color: '#666', fontSize: 14, margin: '6px 0 0' }}>{subtitle}</p>
         </div>
 
         {/* Card */}
@@ -124,7 +150,18 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Campo e-mail (sempre visível) */}
+          {/* Nome — só no signup */}
+          {mode === 'signup' && (
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', color: '#888', fontSize: 13, marginBottom: 8 }}>Nome</label>
+              <input
+                type="text" value={name} onChange={e => setName(e.target.value)}
+                placeholder="Seu nome completo" style={input}
+              />
+            </div>
+          )}
+
+          {/* Campo e-mail */}
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', color: '#888', fontSize: 13, marginBottom: 8 }}>E-mail</label>
             <input
@@ -133,8 +170,8 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Campo senha — só no modo login */}
-          {mode === 'login' && (
+          {/* Campo senha — login e signup */}
+          {(mode === 'login' || mode === 'signup') && (
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', color: '#888', fontSize: 13, marginBottom: 8 }}>Senha</label>
               <input
@@ -145,7 +182,7 @@ export default function LoginPage() {
           )}
 
           {/* Botão principal */}
-          {mode === 'login' ? (
+          {mode === 'login' && (
             <button
               onClick={handleLogin}
               disabled={loading}
@@ -158,7 +195,9 @@ export default function LoginPage() {
             >
               {loading ? 'Entrando...' : 'Entrar'}
             </button>
-          ) : (
+          )}
+
+          {mode === 'reset' && (
             <button
               onClick={handleReset}
               disabled={loading}
@@ -173,24 +212,56 @@ export default function LoginPage() {
             </button>
           )}
 
+          {mode === 'signup' && (
+            <button
+              onClick={handleSignup}
+              disabled={loading}
+              style={{
+                width: '100%', background: '#00e5ff', color: '#0a0a0a',
+                border: 'none', borderRadius: 8, padding: '12px',
+                fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
+                fontFamily: 'inherit', marginBottom: '1rem', opacity: loading ? 0.7 : 1,
+              }}
+            >
+              {loading ? 'Criando conta...' : 'Criar conta'}
+            </button>
+          )}
+
           {/* Separador */}
           <div style={{ borderTop: '1px solid #252525', margin: '1rem 0' }} />
 
           {/* Botões secundários */}
-          {mode === 'login' ? (
-            <button
-              type="button"
-              onClick={() => { setMode('reset'); setMsg(null) }}
-              style={{
-                width: '100%', background: 'none',
-                border: '1px solid #2a2a2a', borderRadius: 8,
-                color: '#aaa', padding: '11px',
-                fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
-              }}
-            >
-              Esqueci minha senha
-            </button>
-          ) : (
+          {mode === 'login' && (
+            <>
+              <button
+                type="button"
+                onClick={() => { setMode('signup'); setMsg(null) }}
+                style={{
+                  width: '100%', background: 'none',
+                  border: '1px solid #2a2a2a', borderRadius: 8,
+                  color: '#aaa', padding: '11px',
+                  fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
+                  marginBottom: '0.75rem',
+                }}
+              >
+                Criar nova conta
+              </button>
+              <button
+                type="button"
+                onClick={() => { setMode('reset'); setMsg(null) }}
+                style={{
+                  width: '100%', background: 'none',
+                  border: '1px solid #2a2a2a', borderRadius: 8,
+                  color: '#aaa', padding: '11px',
+                  fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                Esqueci minha senha
+              </button>
+            </>
+          )}
+
+          {(mode === 'reset' || mode === 'signup') && (
             <button
               type="button"
               onClick={() => { setMode('login'); setMsg(null) }}
@@ -205,10 +276,6 @@ export default function LoginPage() {
             </button>
           )}
         </div>
-
-        <p style={{ textAlign: 'center', color: '#444', fontSize: 13, marginTop: '1.5rem' }}>
-          Não tem acesso? Fale com o administrador.
-        </p>
       </div>
     </div>
   )
