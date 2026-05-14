@@ -112,7 +112,6 @@ export default function LoginPage() {
 
       <div style={{ width: '100%', maxWidth: 400 }}>
 
-        {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -135,10 +134,8 @@ export default function LoginPage() {
           <p style={{ color: '#666', fontSize: 14, margin: '6px 0 0' }}>{subtitle}</p>
         </div>
 
-        {/* Card */}
         <div style={{ background: '#161616', border: '1px solid #252525', borderRadius: 16, padding: '2rem' }}>
 
-          {/* Alerta */}
           {msg && (
             <div style={{
               background: msg.type === 'error' ? '#1a0a0a' : '#0a1a0a',
@@ -150,7 +147,6 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Nome — só no signup */}
           {mode === 'signup' && (
             <div style={{ marginBottom: '1rem' }}>
               <label style={{ display: 'block', color: '#888', fontSize: 13, marginBottom: 8 }}>Nome</label>
@@ -161,7 +157,6 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Campo e-mail */}
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', color: '#888', fontSize: 13, marginBottom: 8 }}>E-mail</label>
             <input
@@ -170,7 +165,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Campo senha — login e signup */}
           {(mode === 'login' || mode === 'signup') && (
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', color: '#888', fontSize: 13, marginBottom: 8 }}>Senha</label>
@@ -181,7 +175,6 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Botão principal */}
           {mode === 'login' && (
             <button
               onClick={handleLogin}
@@ -227,10 +220,8 @@ export default function LoginPage() {
             </button>
           )}
 
-          {/* Separador */}
           <div style={{ borderTop: '1px solid #252525', margin: '1rem 0' }} />
 
-          {/* Botões secundários */}
           {mode === 'login' && (
             <>
               <button

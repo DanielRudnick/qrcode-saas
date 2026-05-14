@@ -31,20 +31,14 @@ export async function GET(
   const device = detectDevice(ua)
   const referrer = request.headers.get('referer') || null
 
-  // Inserir scan e atualizar contador (fire-and-forget)
-  Promise.all([
-    supabase.from('qr_scans').insert({
-      qr_id: qr.id,
-      ip,
-      user_agent: ua.substring(0, 255),
-      device_type: device,
-      referrer,
-    }),
-    supabase
-      .from('qrcodes')
-      .update({ scan_count: qr.id }) // trigger no banco atualiza via view
-      .eq('id', qr.id),
-  ]).catch(console.error)
+  // Inserir scan (fire-and-forget) — contagem agregada pela view qr_stats
+  supabase.from('qr_scans').insert({
+    qr_id: qr.id,
+    ip,
+    user_agent: ua.substring(0, 255),
+    device_type: device,
+    referrer,
+  }).catch(console.error)
 
   // Redirect imediato para o destino
   return NextResponse.redirect(qr.target_url, { status: 302 })
