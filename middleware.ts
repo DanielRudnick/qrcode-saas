@@ -2,7 +2,7 @@
 // middleware.ts — Proteção de rotas
 // ============================================================
 import { NextRequest, NextResponse } from 'next/server'
-import { createMiddlewareClient } from '@/lib/supabase'
+import { createMiddlewareClient } from '@/lib/supabase-server'
 
 export async function middleware(request: NextRequest) {
   const { supabase, response } = createMiddlewareClient(request)

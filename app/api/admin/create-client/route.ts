@@ -1,7 +1,8 @@
 // app/api/admin/create-client/route.ts
 // Rota protegida: só admin pode criar clientes
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabase, createServiceClient } from '@/lib/supabase'
+import { createServerSupabase } from '@/lib/supabase-server'
+import { createServiceClient } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {

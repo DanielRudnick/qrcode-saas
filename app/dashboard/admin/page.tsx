@@ -306,7 +306,7 @@ export default function AdminDashboard() {
                 Nenhum QR Code gerado ainda.
               </div>
             ) : qrstats.map(qr => {
-              const owner = clients.find(c => c.user_id === qr.user_id)
+              const owner = clients.find(c => c.id === qr.user_id)
               return (
                 <div key={qr.id} style={{
                   background: '#161616',
