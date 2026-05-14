@@ -12,6 +12,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [resetMode, setResetMode] = useState(false)
+  const [resetMsg, setResetMsg] = useState('')
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -29,7 +31,6 @@ export default function LoginPage() {
       return
     }
 
-    // Buscar role para redirecionar
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
@@ -40,6 +41,23 @@ export default function LoginPage() {
       router.push('/dashboard/admin')
     } else {
       router.push('/dashboard/client')
+    }
+  }
+
+  async function handleResetPassword(e: React.FormEvent) {
+    e.preventDefault()
+    if (!email) { setError('Digite seu e-mail para redefinir a senha.'); return }
+    setLoading(true)
+    setError('')
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback`,
+    })
+    setLoading(false)
+    if (resetError) {
+      setError('Erro ao enviar e-mail. Tente novamente.')
+    } else {
+      setResetMsg('E-mail de redefinição enviado! Verifique sua caixa de entrada.')
+      setResetMode(false)
     }
   }
 
@@ -94,7 +112,7 @@ export default function LoginPage() {
 
         {/* Card */}
         <form
-          onSubmit={handleLogin}
+          onSubmit={resetMode ? handleResetPassword : handleLogin}
           style={{
             background: '#161616',
             border: '1px solid #252525',
@@ -113,6 +131,20 @@ export default function LoginPage() {
               fontSize: 14,
             }}>
               {error}
+            </div>
+          )}
+
+          {resetMsg && (
+            <div style={{
+              background: '#0a1a0a',
+              border: '1px solid #4ade8044',
+              borderRadius: 8,
+              padding: '10px 14px',
+              marginBottom: '1.25rem',
+              color: '#4ade80',
+              fontSize: 14,
+            }}>
+              {resetMsg}
             </div>
           )}
 
@@ -141,29 +173,41 @@ export default function LoginPage() {
             />
           </div>
 
-          <div style={{ marginBottom: '1.75rem' }}>
-            <label style={{ display: 'block', color: '#888', fontSize: 13, marginBottom: 8 }}>
-              Senha
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-              style={{
-                width: '100%',
-                background: '#0a0a0a',
-                border: '1px solid #2a2a2a',
-                borderRadius: 8,
-                padding: '10px 14px',
-                color: '#fff',
-                fontSize: 14,
-                outline: 'none',
-                boxSizing: 'border-box',
-                fontFamily: 'inherit',
-              }}
-            />
+          {!resetMode && (
+            <div style={{ marginBottom: '0.5rem' }}>
+              <label style={{ display: 'block', color: '#888', fontSize: 13, marginBottom: 8 }}>
+                Senha
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                style={{
+                  width: '100%',
+                  background: '#0a0a0a',
+                  border: '1px solid #2a2a2a',
+                  borderRadius: 8,
+                  padding: '10px 14px',
+                  color: '#fff',
+                  fontSize: 14,
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  fontFamily: 'inherit',
+                }}
+              />
+            </div>
+          )}
+
+          <div style={{ textAlign: 'right', marginBottom: '1.5rem' }}>
+            <button
+              type="button"
+              onClick={() => { setResetMode(m => !m); setError(''); setResetMsg('') }}
+              style={{ background: 'none', border: 'none', color: '#00e5ff', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}
+            >
+              {resetMode ? '← Voltar ao login' : 'Esqueceu a senha?'}
+            </button>
           </div>
 
           <button
@@ -183,7 +227,7 @@ export default function LoginPage() {
               transition: 'opacity 0.2s',
             }}
           >
-            {loading ? 'Entrando...' : 'Entrar'}
+            {loading ? '...' : resetMode ? 'Enviar link de redefinição' : 'Entrar'}
           </button>
         </form>
 
