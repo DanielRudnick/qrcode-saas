@@ -32,13 +32,13 @@ export async function GET(
   const referrer = request.headers.get('referer') || null
 
   // Inserir scan (fire-and-forget) — contagem agregada pela view qr_stats
-  supabase.from('qr_scans').insert({
+  void Promise.resolve(supabase.from('qr_scans').insert({
     qr_id: qr.id,
     ip,
     user_agent: ua.substring(0, 255),
     device_type: device,
     referrer,
-  }).catch(console.error)
+  })).catch(console.error)
 
   // Redirect imediato para o destino
   return NextResponse.redirect(qr.target_url, { status: 302 })
