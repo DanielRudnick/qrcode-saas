@@ -206,7 +206,7 @@ export default function ClientDashboard() {
       user_id: user.id,
       type: qrType,
       label,
-      content: isDynamic ? (slug ? `${process.env.NEXT_PUBLIC_APP_URL}/r/${slug}` : content) : content,
+      content: isDynamic ? (slug ? `${window.location.origin}/r/${slug}` : content) : content,
       target_url: isDynamic ? content : null,
       slug,
       is_dynamic: isDynamic,
@@ -274,7 +274,6 @@ export default function ClientDashboard() {
   async function handleUpdateDynamic(e: React.FormEvent) {
     e.preventDefault()
     if (!editDynamic) return
-    const content = buildQRContent('url', { url: editDynamic.url })
     await supabase.from('qrcodes').update({ target_url: editDynamic.url, label: editDynamic.label }).eq('id', editDynamic.id)
     setEditDynamic(null)
     loadHistory()
@@ -505,7 +504,10 @@ export default function ClientDashboard() {
                         Analytics
                       </button>
                       {qr.is_dynamic && (
-                        <button onClick={() => setEditDynamic({ id: qr.id, label: qr.label, url: '' })}
+                        <button onClick={async () => {
+                          const { data } = await supabase.from('qrcodes').select('target_url').eq('id', qr.id).single()
+                          setEditDynamic({ id: qr.id, label: qr.label, url: data?.target_url || '' })
+                        }}
                           style={{ background: 'none', border: '1px solid #2a2a2a', borderRadius: 8, color: '#c084fc', padding: '5px 10px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
                           Editar URL
                         </button>
