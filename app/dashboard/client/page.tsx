@@ -150,6 +150,7 @@ export default function ClientDashboard() {
   const [history, setHistory] = useState<QRStats[]>([])
   const [selectedQR, setSelectedQR] = useState<QRDetailStats | null>(null)
   const [editDynamic, setEditDynamic] = useState<{ id: string; label: string; url: string } | null>(null)
+  const [viewQR, setViewQR] = useState<{ id: string; label: string; dataURL: string; content: string; target_url: string | null; slug: string | null; is_dynamic: boolean } | null>(null)
 
   const previewTimer = useRef<NodeJS.Timeout>()
 
@@ -284,6 +285,13 @@ export default function ClientDashboard() {
     if (!confirm('Deletar este QR Code?')) return
     await supabase.from('qrcodes').delete().eq('id', id)
     loadHistory()
+  }
+
+  async function handleViewQR(qrId: string) {
+    const { data: qr } = await supabase.from('qrcodes').select('*').eq('id', qrId).single()
+    if (!qr) return
+    const dataURL = await generateQRDataURL(qr.content, { fgColor: qr.fg_color, bgColor: qr.bg_color, ecl: qr.ecl, size: 256 })
+    setViewQR({ id: qr.id, label: qr.label, dataURL, content: qr.content, target_url: qr.target_url, slug: qr.slug, is_dynamic: qr.is_dynamic })
   }
 
   async function handleLogout() {
@@ -441,6 +449,55 @@ export default function ClientDashboard() {
           </div>
         )}
 
+        {/* Modal Ver QR */}
+        {viewQR && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={e => { if (e.target === e.currentTarget) setViewQR(null) }}>
+            <div style={{ background: '#161616', border: '1px solid #252525', borderRadius: 16, padding: '1.5rem', maxWidth: 320, width: '100%', margin: '0 1rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                <img src={viewQR.dataURL} width={220} height={220} alt="QR Code" style={{ borderRadius: 8, border: '1px solid #252525' }} />
+                <div style={{ fontWeight: 600, fontSize: 15, textAlign: 'center' }}>{viewQR.label}</div>
+                {viewQR.is_dynamic && viewQR.target_url ? (
+                  <div style={{ width: '100%' }}>
+                    <div style={{ color: '#666', fontSize: 12, marginBottom: 4 }}>URL de destino</div>
+                    <div style={{ color: '#00e5ff', fontSize: 13, wordBreak: 'break-all' }}>{viewQR.target_url}</div>
+                  </div>
+                ) : (
+                  <div style={{ width: '100%' }}>
+                    <div style={{ color: '#666', fontSize: 12, marginBottom: 4 }}>Conteúdo</div>
+                    <div style={{ color: '#ccc', fontSize: 13, wordBreak: 'break-all', overflow: 'hidden', maxHeight: 60, textOverflow: 'ellipsis' }}>{viewQR.content.substring(0, 120)}{viewQR.content.length > 120 ? '…' : ''}</div>
+                  </div>
+                )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+                  <button
+                    onClick={() => {
+                      const a = document.createElement('a')
+                      a.href = viewQR.dataURL
+                      a.download = `qr_${viewQR.label || 'code'}.png`
+                      a.click()
+                    }}
+                    style={{ background: '#00e5ff', color: '#0a0a0a', border: 'none', borderRadius: 8, padding: '9px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                  >Baixar PNG</button>
+                  {viewQR.is_dynamic && (
+                    <button
+                      onClick={async () => {
+                        const { data } = await supabase.from('qrcodes').select('target_url').eq('id', viewQR.id).single()
+                        setEditDynamic({ id: viewQR.id, label: viewQR.label, url: data?.target_url || '' })
+                        setViewQR(null)
+                      }}
+                      style={{ background: 'none', border: '1px solid #c084fc', borderRadius: 8, color: '#c084fc', padding: '9px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
+                    >Editar URL</button>
+                  )}
+                  <button
+                    onClick={() => setViewQR(null)}
+                    style={{ background: 'none', border: '1px solid #2a2a2a', borderRadius: 8, color: '#888', padding: '9px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
+                  >Fechar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Tab: Histórico */}
         {tab === 'historico' && (
           <div>
@@ -500,6 +557,10 @@ export default function ClientDashboard() {
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: 6 }}>
+                      <button onClick={() => handleViewQR(qr.id)}
+                        style={{ background: 'none', border: '1px solid #2a2a2a', borderRadius: 8, color: '#fff', padding: '5px 10px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
+                        Ver QR
+                      </button>
                       <button onClick={() => loadQRDetail(qr.id)}
                         style={{ background: 'none', border: '1px solid #2a2a2a', borderRadius: 8, color: '#00e5ff', padding: '5px 10px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
                         Analytics
