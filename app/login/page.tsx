@@ -25,7 +25,7 @@ export default function LoginPage() {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
-      setMsg({ text: 'E-mail ou senha incorretos.', type: 'error' })
+      setMsg({ text: error.message, type: 'error' })
       setLoading(false)
       return
     }
